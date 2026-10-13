@@ -1,0 +1,90 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:macro name="simple_gripper" params="prefix parent">
+
+    <!-- Paume -->
+    <link name="${prefix}palm">
+      <visual>
+        <origin xyz="0 0 0.025" rpy="0 0 0"/>
+        <geometry><box size="0.08 0.08 0.05"/></geometry>
+        <material name="${prefix}grey"><color rgba="0.3 0.3 0.3 1"/></material>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0.025" rpy="0 0 0"/>
+        <geometry><box size="0.08 0.08 0.05"/></geometry>
+      </collision>
+    </link>
+
+    <joint name="${prefix}palm_joint" type="fixed">
+      <parent link="${parent}"/>
+      <child link="${prefix}palm"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+    </joint>
+
+    <!-- Doigt gauche -->
+    <link name="${prefix}finger_left">
+      <visual>
+        <origin xyz="0 0 0.04" rpy="0 0 0"/>
+        <geometry><box size="0.02 0.01 0.08"/></geometry>
+        <material name="${prefix}black"><color rgba="0.1 0.1 0.1 1"/></material>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0.04" rpy="0 0 0"/>
+        <geometry><box size="0.02 0.01 0.08"/></geometry>
+      </collision>
+    </link>
+
+    <joint name="${prefix}finger_left_joint" type="prismatic">
+      <parent link="${prefix}palm"/>
+      <child link="${prefix}finger_left"/>
+      <origin xyz="0 0.025 0.05" rpy="0 0 0"/>
+      <axis xyz="0 -1 0"/>
+      <limit lower="0.0" upper="0.02" effort="20" velocity="0.1"/>
+    </joint>
+
+    <!-- Doigt droit (copie le gauche) -->
+    <link name="${prefix}finger_right">
+      <visual>
+        <origin xyz="0 0 0.04" rpy="0 0 0"/>
+        <geometry><box size="0.02 0.01 0.08"/></geometry>
+        <material name="${prefix}black"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0.04" rpy="0 0 0"/>
+        <geometry><box size="0.02 0.01 0.08"/></geometry>
+      </collision>
+    </link>
+
+    <joint name="${prefix}finger_right_joint" type="prismatic">
+      <parent link="${prefix}palm"/>
+      <child link="${prefix}finger_right"/>
+      <origin xyz="0 -0.025 0.05" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="0.0" upper="0.02" effort="20" velocity="0.1"/>
+      <mimic joint="${prefix}finger_left_joint" multiplier="1" offset="0"/>
+    </joint>
+
+    <!-- Point de saisie (TCP), utile plus tard pour MoveIt -->
+    <link name="${prefix}tcp"/>
+    <joint name="${prefix}tcp_joint" type="fixed">
+      <parent link="${prefix}palm"/>
+      <child link="${prefix}tcp"/>
+      <origin xyz="0 0 0.12" rpy="0 0 0"/>
+    </joint>
+
+      <!-- Interface ros2_control (matériel simulé) -->
+    <ros2_control name="${prefix}hw" type="system">
+      <hardware>
+        <plugin>mock_components/GenericSystem</plugin>
+      </hardware>
+      <joint name="${prefix}finger_left_joint">
+        <command_interface name="position"/>
+        <state_interface name="position">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+      </joint>
+    </ros2_control>
+
+  </xacro:macro>
+</robot>
